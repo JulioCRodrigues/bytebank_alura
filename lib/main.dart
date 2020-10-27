@@ -7,7 +7,7 @@ class ByteBankApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: FormularioTransferencia(),
+        body: ListaTransferencia(),
       ),
       debugShowCheckedModeBanner: false,
     );
@@ -29,56 +29,61 @@ class FormularioTransferencia extends StatelessWidget {
       ),
       body: Column(
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _controladorCampoNumeroConta,
-              decoration: InputDecoration(
-                labelText: 'Número da conta',
-                hintText: '0000'
-              ),
-              style: TextStyle(
-                fontSize: 20.0
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _controladorCampoValor,
-              decoration: InputDecoration(
-                labelText: 'Valor',
-                hintText: '0.00',
-                icon: Icon(Icons.monetization_on)
-              ),
-              style: TextStyle(
-                fontSize: 20.0
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
+          Editor(controlador: _controladorCampoNumeroConta, dica: '0000', rotulo:'Numero da conta',),
+          Editor(controlador: _controladorCampoValor, dica: '0.00', rotulo: 'Valor', icone: Icons.monetization_on,),
           //Pegar os dados do input e converter para criar transferencia
           RaisedButton(
             child: Text('Confirmar'),
-            onPressed: (){
-                print('Clicou no confirmar');
-                final int numeroConta = int.tryParse(_controladorCampoNumeroConta.text);
-                final double valor = double.tryParse(_controladorCampoValor.text);
-
-                if(numeroConta != null && valor != null){
-                  final TransferenciaCriada = Transferencia(valor, numeroConta);
-                  Scaffold.of(context).showSnackBar(SnackBar(
-                    content: Text('$TransferenciaCriada'),
-                  ));
-                }
-            },
+            onPressed: ()=> _criaTransferencia(context),
           ),
         ],
       ),
     );
   }
+
+  void _criaTransferencia(BuildContext context) {
+    final int numeroConta = int.tryParse(_controladorCampoNumeroConta.text);
+    final double valor = double.tryParse(_controladorCampoValor.text);
+
+    if(numeroConta != null && valor != null){
+      final TransferenciaCriada = Transferencia(valor, numeroConta);
+      Navigator.pop(context, TransferenciaCriada);
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text('$TransferenciaCriada'),
+      ));
+    }
+  }
 }
+
+class Editor extends StatelessWidget {
+
+  final TextEditingController controlador;
+  final String rotulo;
+  final String dica;
+  final IconData icone;
+
+  Editor({this.controlador, this.rotulo, this.dica, this.icone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: controlador,
+        decoration: InputDecoration(
+            labelText: rotulo,
+            hintText: dica,
+            icon: icone != null ? Icon(icone) : null,
+        ),
+        style: TextStyle(
+            fontSize: 20.0
+        ),
+        keyboardType: TextInputType.number,
+      ),
+    );
+  }
+}
+
 
 // cria lista de transferencia na tela principal de visualização
 class ListaTransferencia extends StatelessWidget{
@@ -95,6 +100,15 @@ class ListaTransferencia extends StatelessWidget{
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
+        onPressed: (){
+          final Future<Transferencia> future = Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return FormularioTransferencia();
+          }));
+          future.then((transferenciaRecebida){
+            debugPrint('chegou no then do future');
+            debugPrint('$transferenciaRecebida');
+          });
+        },
       ),
     );
   }
